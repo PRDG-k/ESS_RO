@@ -2,25 +2,24 @@ Welcome to the CBC MILP Solver
 Version: 2.10.3 
 Build Date: Dec 15 2019 
 
-command line - C:\Users\kks\AppData\Local\Programs\Python\Python310\lib\site-packages\pulp\solverdir\cbc\win\64\cbc.exe C:\Users\kks\AppData\Local\Temp\047f43767ead4d299fe7d54b5f85a2c0-pulp.mps -sec 99 -timeMode elapsed -branch -printingOptions all -solution C:\Users\kks\AppData\Local\Temp\047f43767ead4d299fe7d54b5f85a2c0-pulp.sol (default strategy 1)
+command line - C:\Users\kks\AppData\Local\Programs\Python\Python310\lib\site-packages\pulp\solverdir\cbc\win\64\cbc.exe C:\Users\kks\AppData\Local\Temp\4b4a9141f1a14c50969ed7bda2107fd9-pulp.mps -sec 60 -timeMode elapsed -branch -printingOptions all -solution C:\Users\kks\AppData\Local\Temp\4b4a9141f1a14c50969ed7bda2107fd9-pulp.sol (default strategy 1)
 At line 2 NAME          MODEL
 At line 3 ROWS
-At line 101 COLUMNS
-At line 454 RHS
-At line 551 BOUNDS
-At line 600 ENDATA
-Problem MODEL has 96 rows, 144 columns and 304 elements
+At line 461 COLUMNS
+At line 2584 RHS
+At line 3041 BOUNDS
+At line 3090 ENDATA
+Problem MODEL has 456 rows, 864 columns and 2074 elements
 Coin0008I MODEL read with 0 errors
-seconds was changed from 1e+100 to 99
+seconds was changed from 1e+100 to 60
 Option for timeMode changed from cpu to elapsed
-Presolve 58 (-38) rows, 93 (-51) columns and 200 (-104) elements
-Perturbing problem by 0.001% of 580.85947 - largest nonzero change 0.00032020538 ( 5.8623043e-05%) - largest zero change 0.00031389808
-0  Obj 12073783 Primal inf 1469.043 (15) Dual inf 2949.346 (8)
-48  Obj 12356445 Primal inf 0.059734202 (4)
-51  Obj 12356445
-Optimal - objective value 12356444
-After Postsolve, objective 12356444, infeasibilities - dual 0 (0), primal 0 (0)
-Optimal objective 12356444.32 - 51 iterations time 0.002, Presolve 0.00
+Presolve 70 (-386) rows, 115 (-749) columns and 250 (-1824) elements
+Perturbing problem by 0.001% of 580.85947 - largest nonzero change 0.00029918468 ( 5.2449567e-05%) - largest zero change 0.00029895019
+0  Obj 12164593 Primal inf 2780.1062 (25)
+56  Obj 12593437
+Optimal - objective value 12593435
+After Postsolve, objective 12593435, infeasibilities - dual 0 (0), primal 0 (0)
+Optimal objective 12593435.46 - 56 iterations time 0.002, Presolve 0.00
 Option for printingOptions changed from normal to all
 Total time (CPU seconds):       0.01   (Wallclock seconds):       0.01
 

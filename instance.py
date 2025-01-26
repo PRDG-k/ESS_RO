@@ -32,6 +32,7 @@ class Instance:
         
         self.SEASON = param.SEASON
         self.DATANUM = param.DATANUM
+
         self.INSAMPLE= param.INSAMPLE
         self.MODEL = param.MODEL
         self.NUM_SCENARIO = param.NUM_SCENARIO
@@ -57,6 +58,7 @@ class Instance:
 
         self.read_price_data()
         self.read_predict_data()
+
         # self.processing_data()
 
     
@@ -82,9 +84,14 @@ class Instance:
         current_dir = os.getcwd()
         data_dir = os.path.join(current_dir, "Data")
 
+        pv = pd.read_csv(os.path.join("ml", 'pv_pred.csv'), index_col=0)
+
+        assert (np.array(pv) >= 0).all() == True
+
         self.load = pd.read_csv(os.path.join(data_dir, 'LOAD_RESULT.csv'), usecols=['Total Load'])['Total Load']
-        self.pv = pd.read_csv(os.path.join(data_dir, 'PV_RESULT.csv'), usecols=['pv'])['pv']
-        
+        self.pv = {col.split("_")[0]: np.array(pv[col]) for col in pv.columns}
+        self.BUILDINGS = list(self.pv.keys())
+
             
     def processing_data(self):
 
@@ -95,4 +102,3 @@ class Instance:
     def export_instance(self, model:pulp.LpProblem):
         charge = []
         discharge = []
-

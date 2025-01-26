@@ -1,23 +1,13 @@
 
-from model import solve_det_model
+from model import solve_selected_model
 from util import *
 from instance import *
 import argparse
 
-
-def run_deterministic(instance: Instance):
-    res, sol = solve_det_model(instance)
-    return res, sol
-
 def run_experiment(params: Params):
     instance = Instance(params)
-    if params.MODEL =='det':
-        solve_result, sol = run_deterministic(instance)
-    else:
-        print("invalid MODEL")
-        return 0
-    
-
+    res, sol = solve_selected_model(instance)
+    return res, sol
 
 def main():
     parser = setparser(argparse.ArgumentParser(description="Experiments."))
@@ -37,7 +27,7 @@ def main():
         GAMMA= args.gamma
     )
 
-    run_experiment(params)
+    res, sol = run_experiment(params)
 
 if __name__ == "__main__":
     #sys.argv = ['test', '--model', 'box', '--obj_type', '1']
