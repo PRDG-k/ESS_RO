@@ -14,7 +14,7 @@ def setparser(parser: argparse.ArgumentParser):
     parser.add_argument('--dnum', type=int,             
                         default=0,  help='[0,9]: Datanum')
     parser.add_argument('--model', type=str,             
-                        choices = ['det', 'ro', 'so'], default = 'det',  help = 'det, ro, so')
+                        choices = ['det', 'ro', 'so'], default = 'ro',  help = 'det, ro, so')
     parser.add_argument('--insample', type=int,    
                         choices = [0,1], default=1, help='0: out-of-sample test , 1: in-sample test')
     parser.add_argument('--num_scenario', type=int,     

@@ -87,10 +87,24 @@ class Instance:
         pv = pd.read_csv(os.path.join("ml", 'pv_pred.csv'), index_col=0)
 
         assert (np.array(pv) >= 0).all() == True
+        assert len(pv) == self.T
 
         self.load = pd.read_csv(os.path.join(data_dir, 'LOAD_RESULT.csv'), usecols=['Total Load'])['Total Load']
         self.pv = {col.split("_")[0]: np.array(pv[col]) for col in pv.columns}
         self.BUILDINGS = list(self.pv.keys())
+
+        if self.MODEL == 'ro':
+            # ML의 성능을 불롹실성으로 모델링
+            res = pd.read_csv(os.path.join("ml", "pv_pred_error.csv"), index_col=0)
+            res.columns = self.BUILDINGS
+            self.res_mean = res.groupby(level=0).mean()
+            self.res_sd = res.groupby(level=0).std()
+
+            res = pd.read_csv(os.path.join("ml", "pv_pred_error_by_time.csv"), index_col=0)
+            # res = res.astype(float)
+            self.tres_mean = list(res.mean())
+            self.tres_sd = list(res.std())
+            # self.volta = 
 
             
     def processing_data(self):
