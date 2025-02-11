@@ -7,14 +7,18 @@ from util import *
 from typing import Dict, List
 from instance import *
 
+
 def solve_selected_model(inst: Instance):
     match inst.MODEL:
-        case "det":
-            res, sol = solve_det_model(inst)
         case "ro":
             res, sol = solve_ro_model(inst)
         case "so":
             res, sol = solve_so_model(inst)    
+        case "det":
+            res, sol = solve_det_model(inst)
+        case "real":
+            res, sol = solve_det_model(inst)
+
     return res, sol
 
 def solve_ro_model(inst: Instance):
@@ -26,17 +30,12 @@ def solve_ro_model(inst: Instance):
     PV = inst.pv
     tou_price = inst.CHARGING_PRICE
 
-    PB = {(p,b) for p in PERIOD for b in BUILDINGS}
-    N = len(PERIOD) * len(BUILDINGS)
-
-    K = 1.96  
-    z_mu = 0
-    z_sigma = 1
-    
+    _std = inst.tres_sd
+    _mean = inst.tres_mean
 
     # ==============================================
     
-    model = pulp.LpProblem('robustic', pulp.LpMinimize)
+    model = pulp.LpProblem(inst.MODEL, pulp.LpMinimize)
     model, u, d_load, d_bess, v_load, v_bess, c = common_vars_and_cons(model,inst)
 
     
@@ -50,71 +49,41 @@ def solve_ro_model(inst: Instance):
 
         # ==============================================
 
-        lb = z_mu - K * z_sigma
-        ub = z_mu + K * z_sigma
-        # lb = -1
-        # ub = 1
+        budget = inst.GAMMA
 
         # Uncertainty modeling(시간별 오차가 정규분포를 따른다: 신뢰구간 양 끝값에서 방어)
         im = pulp.LpProblem("Inner_maximization", pulp.LpMaximize)
 
-        z = pulp.LpVariable.dicts('norm_z', indices=PB, lowBound=lb, upBound=ub, cat='Continuous')
-        v1 = pulp.LpVariable.dicts('abs_obj', indices=PB, cat='Continuous')
-        v2 = pulp.LpVariable.dicts('abs_gap', indices=PB, cat='Continuous')
+        # 양방향을 방어하려면 어떻게 해야 할까?
+        w = pulp.LpVariable.dicts('norm_z', indices=PERIOD, lowBound=0, upBound=1, cat='Continuous')
+        # abs_w = pulp.LpVariable.dicts('|w|', indices=PERIOD, lowBound=0, upBound=1, cat='Continuous')
 
-        im.objective += pulp.lpSum(z)
+        im.objective += pulp.lpSum(tou_price[t] * w[t] for t in PERIOD)
 
-        # 평균제약
-        im += pulp.lpSum(z[t,b] for t in PERIOD for b in BUILDINGS) / N == z_mu
-
-        # 분산제약
-        # 분산 -> 절댓값 선형화
-        for t in PERIOD:
-            for b in BUILDINGS:
-                im += v2[t,b] >= z[t,b] - z_mu
-                im += v2[t,b] >= z_mu - z[t,b]
-        im += pulp.lpSum(v2[t,b] for t in PERIOD for b in BUILDINGS) / N <= z_sigma / N
-        
+        im += pulp.lpSum(w) <= budget
 
         solver = pulp.PULP_CBC_CMD(msg=False)
         im.solve(solver)
 
-        Uset = {key: var.varValue for key, var in z.items()}
+        Uset = {key: var.varValue for key, var in w.items()}
+        # _Uset = {key: var.varValue for key, var in abs_w.items()}
         
-        pd.DataFrame.from_dict(Uset, orient='index', columns=['u1']).to_csv("log/uncertainty.csv")
+        pd.DataFrame.from_dict({'u': Uset}).to_csv(f"log/uSet_g{budget}.csv")
+        im.writeLP('./model_{}.lp'.format(im.name))
 
-        # 개별 오차가 특정 분포를 따른다.
-        # if sigma != 0:
-        
-        #     # uncertainty modeling
-        #     im = pulp.LpProblem('inner_maximization', pulp.LpMaximize)
-
-        #     w = pulp.LpVariable('w')                            # 불확실성 가중치
-        #     z = pulp.LpVariable('z', lowBound=-1, upBound=1)     # z~N(0,1)
-        #     v = pulp.LpVariable('v', lowBound=0)                 # 절댓값 변수
-        #     # q = mu + K * sigma * z
-
-        #     im.objective += v
-
-        #     im += v >=  z
-        #     im += v <= -z
-
-        #     solver = pulp.PULP_CBC_CMD(msg=False)
-        #     im.solve(solver)
-
-        #     volta = mu + K * sigma * im.objective.value()
-
-        #     del im
 
         # ==============================================
 
         # PV Constraint
         for t in PERIOD:
-            for b in BUILDINGS:
-                
-                sigma = inst.res_sd[b][t]
-                mu = inst.res_mean[b][t]
-                volta = mu + sigma * z[t,b].varValue
+            sigma = _std[t]
+            mu = _mean[t]
+
+            for b in BUILDINGS:    
+                if inst.skewness[t] >= 0.5:
+                    volta = mu + sigma * w[t].varValue
+                else:
+                    volta = mu + sigma * w[t].varValue * -1
                 model += v_bess[t,b] + v_load[t,b] <= max(PV[b][t] + volta, 0)
 
 
@@ -189,7 +158,7 @@ def solve_det_model(inst: Instance):
 
     # ==============================================
     
-    model = pulp.LpProblem('deterministic', pulp.LpMinimize)
+    model = pulp.LpProblem(inst.MODEL, pulp.LpMinimize)
     model, u, d_load, d_bess, v_load, v_bess, c = common_vars_and_cons(model,inst)
     
     #define constraints
@@ -233,12 +202,13 @@ def common_vars_and_cons(model:pulp.LpProblem , inst: Instance):
     
 
     # Initial and Final SoC
+    model += c[0] == 0
     model += u[0] == 0.5
     model += u[inst.T-1] == 0.5
 
     # SoC Constraint
-    for t in range(0,inst.T-2):
-        model += u[t] + (inst.eta * (d_bess[t] + pulp.lpSum(v_bess[t, b] for b in inst.BUILDINGS)) - c[t]) / inst.CAPA == u[t+1]
+    for t in range(1,inst.T):
+        model += u[t-1] + (inst.eta * (d_bess[t] + pulp.lpSum(v_bess[t, b] for b in inst.BUILDINGS)) - c[t]) / inst.CAPA == u[t]
 
 
     # BESS power Constraint
@@ -255,7 +225,7 @@ def solve_model(model: pulp.LpProblem, MAX_TIME: int, DEBUG=True):
         model.writeLP('./model_{}.lp'.format(model.name))
 
 
-    path = "log/log_file.txt"
+    path = f"log/log_file_{model.name}.txt"
     solver = pulp.PULP_CBC_CMD(msg=False, timeLimit=MAX_TIME, logPath=path) # We set msg=False since logPath disables CBC's logs in the Python console
     status = model.solve(solver)
 
@@ -267,7 +237,7 @@ def solve_model(model: pulp.LpProblem, MAX_TIME: int, DEBUG=True):
         # best_bound = logs_dict["best_bound"]
         # gap = abs(best_solution - best_bound) / (eps + abs(best_bound)) * 100
         gap = 0
-        print(f"Gap (relative to the lower bound) is {gap:.2f}%.")
+        print(f"Model {model.name}: Gap (relative to the lower bound) is {gap:.2f}%.")
     else :
         print("Unable to retrieve gap.")
         print(logs_dict)
@@ -306,12 +276,17 @@ def save_sols(model: pulp.LpProblem, inst: Instance, u, d_load, d_bess, v_load, 
     u_values = {key: np.round(var.varValue,4) for key, var in u.items()}
     c_values = {key: np.round(var.varValue,4) for key, var in c.items()}
     
-    sol_list = {"dl": dl_values,
-                "db": db_values,
+    sol_list = {
+                "dl": dl_values,
                 "vl": vl_values,
+                "db": db_values,
                 "vb": vb_values,
-                "soc": u_values,
-                "dc": c_values}
+                "dc": c_values,
+                "soc": u_values
+                }
 
-    pd.DataFrame(sol_list).to_csv("log/vars_result.csv")
+    if model.name == 'ro':
+        pd.DataFrame(sol_list).to_csv(f"log/vars_result_{model.name}_g{inst.GAMMA}.csv")
+    else:
+        pd.DataFrame(sol_list).to_csv(f"log/vars_result_{model.name}.csv")
     return sol_list

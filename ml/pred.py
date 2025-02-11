@@ -45,5 +45,6 @@ for idx in index.unique():
 
 pd.DataFrame(res_by_time).to_csv(os.path.join("ml", "pv_pred_error_by_time.csv"))
 
-pred_value.to_csv(os.path.join("ml","pv_pred.csv"))
+pd.DataFrame(abs(pv[-24:])).to_csv(os.path.join("ml","pv_real.csv"))
+pd.DataFrame(abs(pv[-48:-24])).to_csv(os.path.join("ml","pv_pred.csv"))
 res_df.to_csv(os.path.join("ml", "pv_pred_error.csv"))

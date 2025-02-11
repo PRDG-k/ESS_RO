@@ -10,7 +10,7 @@ import argparse
 def setparser(parser: argparse.ArgumentParser):
 
     parser.add_argument('--season', type=str,           
-                        choices = ['spring', 'summer', 'winter'], default='spring', help='spring, summer, winter')
+                        choices = ['spring', 'summer', 'winter'], default='summer', help='spring, summer, winter')
     parser.add_argument('--dnum', type=int,             
                         default=0,  help='[0,9]: Datanum')
     parser.add_argument('--model', type=str,             
@@ -26,6 +26,6 @@ def setparser(parser: argparse.ArgumentParser):
     parser.add_argument('--ctr_style', type=int,    
                         default=0, help='0: sparse, 1: dense')
     parser.add_argument('--gamma', type=float,    
-                        default=1, help='[0,1,2,3]')
+                        default=12, help='[0,6,12,24]')
     
     return parser

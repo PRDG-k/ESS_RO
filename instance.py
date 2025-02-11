@@ -57,7 +57,7 @@ class Instance:
 
 
         self.read_price_data()
-        self.read_predict_data()
+        self.read_predict_data("pv_pred.csv")
 
         # self.processing_data()
 
@@ -80,17 +80,20 @@ class Instance:
         self.DISCHARGING_PRICE = {key: value * 1 for key, value in self.CHARGING_PRICE.items()}
         self.PENALTY_PRICE = {key: value *10 for key, value in self.CHARGING_PRICE.items()}
     
-    def read_predict_data(self):
+    def read_predict_data(self, filename):
         current_dir = os.getcwd()
         data_dir = os.path.join(current_dir, "Data")
 
-        pv = pd.read_csv(os.path.join("ml", 'pv_pred.csv'), index_col=0)
+        pv = pd.read_csv(os.path.join("ml", filename), index_col=0)
 
         assert (np.array(pv) >= 0).all() == True
         assert len(pv) == self.T
 
         self.load = pd.read_csv(os.path.join(data_dir, 'LOAD_RESULT.csv'), usecols=['Total Load'])['Total Load']
         self.pv = {col.split("_")[0]: np.array(pv[col]) for col in pv.columns}
+        self.sum_v_i = pv.sum(axis=1)
+        self.sum_v_i.index = self.PERIOD
+
         self.BUILDINGS = list(self.pv.keys())
 
         if self.MODEL == 'ro':
@@ -99,11 +102,13 @@ class Instance:
             res.columns = self.BUILDINGS
             self.res_mean = res.groupby(level=0).mean()
             self.res_sd = res.groupby(level=0).std()
+            
 
             res = pd.read_csv(os.path.join("ml", "pv_pred_error_by_time.csv"), index_col=0)
             # res = res.astype(float)
             self.tres_mean = list(res.mean())
             self.tres_sd = list(res.std())
+            self.skewness = list(sum(res.values < 0) / len(res))
             # self.volta = 
 
             

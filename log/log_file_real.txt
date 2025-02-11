@@ -1,0 +1,25 @@
+Welcome to the CBC MILP Solver 
+Version: 2.10.3 
+Build Date: Dec 15 2019 
+
+command line - C:\Users\kks\AppData\Local\Programs\Python\Python310\lib\site-packages\pulp\solverdir\cbc\win\64\cbc.exe C:\Users\kks\AppData\Local\Temp\9521763ab5514156aa97e5b70b211efc-pulp.mps -sec 60 -timeMode elapsed -branch -printingOptions all -solution C:\Users\kks\AppData\Local\Temp\9521763ab5514156aa97e5b70b211efc-pulp.sol (default strategy 1)
+At line 2 NAME          MODEL
+At line 3 ROWS
+At line 463 COLUMNS
+At line 2607 RHS
+At line 3066 BOUNDS
+At line 3115 ENDATA
+Problem MODEL has 458 rows, 864 columns and 2095 elements
+Coin0008I MODEL read with 0 errors
+seconds was changed from 1e+100 to 60
+Option for timeMode changed from cpu to elapsed
+Presolve 69 (-389) rows, 114 (-750) columns and 251 (-1844) elements
+Perturbing problem by 0.001% of 966.67806 - largest nonzero change 0.00049484691 ( 5.6775722e-05%) - largest zero change 0.00048606463
+0  Obj 15623661 Primal inf 2421.1018 (25)
+59  Obj 16204387
+Optimal - objective value 16204385
+After Postsolve, objective 16204385, infeasibilities - dual 0 (0), primal 0 (0)
+Optimal objective 16204384.84 - 59 iterations time 0.002, Presolve 0.00
+Option for printingOptions changed from normal to all
+Total time (CPU seconds):       0.01   (Wallclock seconds):       0.01
+
